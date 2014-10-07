@@ -1,10 +1,11 @@
 #include <time.h>
 #include <iostream>
 #include <string>
+#include <stdio.h>
 using namespace std;
 class Player{
 public:
-    int str = 1, str_mod, ac, hp, dex = 1, dex_mod, intel = 1, intel_mod, con = 1, con_mod, wis = 1, wis_mod, cha = 1, cha_mod;
+    int str = 1, str_mod, ac = 16, hp = 20, dex = 1, dex_mod, intel = 1, intel_mod, con = 1, con_mod, wis = 1, wis_mod, cha = 1, cha_mod;
     int xp = 0;
     int level = 1;
     int available_stats[6] = {16,14,13,12,11,10};
@@ -15,10 +16,19 @@ public:
     void print_avail_stats();
     void set_enemy_stats(int,int,int);
     void user_fight(int,int,int);
-    void scenario(string,string,string,string,int,int,int);
+    void check_death();
+    int scenario(string,string,string,string,int,int,int);
+    void choice(string,string,string,int,string,string,string,string,int,int,int,string);
 };
-//Player's stat mod, stat Player's going up against (used for finding whether something hits/skill checks)
-int roll_check(int x, int y){ 
+void pause(){
+    int c;
+    c = getchar();
+}
+void story(string a){
+    cout << a;
+    pause();
+}
+int roll_check(int x, int y){ //Player's stat mod, stat Player's going up against (used for finding whether something hits/skill checks)
     int roll = (rand() % 20) + x;
     //cout << "You rolled " << roll << ". \n";
     if (roll + x>=y){
@@ -61,8 +71,7 @@ void Player::print_avail_stats(){
     printf(" \n");
 }
 void Player::set_stats(){
-    ac = 16;
-    hp = 20;
+    printf("Hello!  Choose your stats! \n");
     print_avail_stats();
     printf("Enter a number for strength: ");
     while(check_stat(str)==false){
@@ -99,8 +108,9 @@ void Player::set_stats(){
     con_mod = (con - 9) / 2;
     wis_mod = (wis -9) / 2;
     cha_mod = (cha - 9) / 2;
+    
 }
-void Player::set_stats(int a, int b, int c, int d, int e, int f){ //str dex intel con wis cha
+void Player::set_stats(int a, int b, int c, int d, int e, int f){ //str dex intel con wis cha hp ac
     str = a;
     dex = b;
     intel = c;
@@ -123,6 +133,12 @@ void Player::set_enemy_stats(int x, int y, int z){ //str, ac, hp
 void Player::take_damage(int x){ //damage he's taking
     hp = hp - x;
 }
+void Player::check_death(){
+    if (hp <= 0){
+        printf("You died. \n");
+        exit(0);
+    }
+}
 void Player::user_fight(int x, int y, int z){ //enemy str,ac,hp
     string choice;
     Player enemy;
@@ -132,17 +148,16 @@ void Player::user_fight(int x, int y, int z){ //enemy str,ac,hp
         cin >> choice;
         if (choice == "1"){
             printf("You attempt to hit the enemy. \n");
+            pause();
             enemy.take_damage(find_damage(roll_check(str_mod, enemy.ac),str_mod));
             if(enemy.hp <= 0){
                 printf("Success!  The enemy died! \n");
                 break;
             }
             printf("The enemy attempts to hit you. \n");
+            pause();
             take_damage(find_damage(roll_check(enemy.str_mod, ac),enemy.str_mod));
-            if (hp <= 0){
-                printf("You died. \n");
-                break;
-            }
+            check_death();
         }
         else if(choice == "2"){
             if(roll_check(dex_mod,20)==1){
@@ -150,11 +165,9 @@ void Player::user_fight(int x, int y, int z){ //enemy str,ac,hp
             }
             else{
                 printf("The enemy attempts to hit you. \n");
+                pause();
                 take_damage(find_damage(roll_check(enemy.str_mod, ac),enemy.str_mod));
-                if (hp <= 0){
-                    printf("You died. \n");
-                    break;
-                }
+                check_death();
             }
         }
         else{
@@ -162,14 +175,12 @@ void Player::user_fight(int x, int y, int z){ //enemy str,ac,hp
         }
     }
 }
-//string b = story text, string a = "check" or "fight" or "choice",
-//if fight, then enemy str, ac, hp
-// check, c = failure text, d = success text, x = user's stat y = other num, z = health subtraction
- //if failed
-void Player::scenario(string a, string b, string c, string d, int x, int y, int z){
-    cout << b << " \n";                                              
-    if (a == "check"){                                              
-        if (roll_check(x,y) == 1){                                
+int Player::scenario(string a, string b, string c, string d, int x, int y, int z){ //string b = story text, string a = "check" or "fight",
+    cout << b << " \n";
+    pause();//if fight, then enemy str, ac, hp
+    if (a == "check"){
+        // check, c = failure text, d = success text, x = user's stat y = other num, z = health subtraction
+        if (roll_check(x,y) == 1){                                 //if failed
             cout << d;
         }
         else {
@@ -180,10 +191,30 @@ void Player::scenario(string a, string b, string c, string d, int x, int y, int 
     if(a == "fight"){
         user_fight(x,y,z);
     }
+    return 0;
+}
+void Player::choice(string a, string b, string c, int x, string g, string h, string i, string j, int k, int l, int m, string z){ //background, choice options,num of bad choice, scenario data, good answer
+    string answer;
+    cout << a << "\n" << b << " or " << c << "\n";
+    cin >> answer;
+    if (answer == b){
+        if (x == 1){
+            scenario(g,h,i,j,k,l,m);
+        }
+        else{
+            cout << z;
+        }
+    }
+    else if (answer == c){
+        if (x == 2){
+            scenario(g,h,i,j,k,l,m);
+        }
+        else {
+            cout << z;
+        }
+    }
 }
 int main(){
     srand(time(NULL));
-    Player user;
-    user.set_stats();
     return 0;
 }
